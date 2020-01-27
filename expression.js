@@ -61,6 +61,12 @@ window.onload = function() {
         }
     }
 
+    class Expression_Power extends Expression {
+        constructor(optoken, left, right) {
+            super(optoken, [left, right]);
+        }
+    }
+
     class Expression_Negative extends Expression {
         constructor(optoken, arg) {
             super(optoken, [arg]);
@@ -112,7 +118,7 @@ window.onload = function() {
             let expr = this.ParseMulExpr();
             let optoken;
             while (optoken = this.NextTokenIs(['+', '-'])) {
-                const right = ParseMulExpr();
+                const right = this.ParseMulExpr();
                 if (optoken.text === '+') {
                     expr = new Expression_Add(optoken, expr, right);
                 } else {
