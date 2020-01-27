@@ -110,8 +110,8 @@ window.onload = function() {
         ParseExpr() {
             // expr ::= mulexpr { addop mulexpr }
             let expr = this.ParseMulExpr();
-            while (this.NextTokenIs(['+', '-'])) {
-                const optoken = this.GetNextToken();
+            let optoken;
+            while (optoken = this.NextTokenIs(['+', '-'])) {
                 const right = ParseMulExpr();
                 if (optoken.text === '+') {
                     expr = new Expression_Add(optoken, expr, right);
@@ -125,8 +125,8 @@ window.onload = function() {
         ParseMulExpr() {
             // mulexpr ::= powexpr { mulop powexpr }
             let expr = this.ParsePowExpr();
-            while (this.NextTokenIs(['*', '/'])) {
-                const optoken = this.GetNextToken();
+            let optoken;
+            while (optoken = this.NextTokenIs(['*', '/'])) {
                 const right = ParsePowExpr();
                 if (optoken.text === '*') {
                     expr = new Expression_Multiply(optoken, expr, right);
@@ -142,22 +142,22 @@ window.onload = function() {
 
             // Eliminate any leading unary '+' operators, because they don't do anything.
             while (this.NextTokenIs(['+'])) {
-                this.GetNextToken();
+                // do nothing
             }
 
-            if (this.NextTokenIs(['-'])) {
+            let optoken;
+            if (optoken = this.NextTokenIs(['-'])) {
                 const optoken = this.GetNextToken();
                 const arg = this.ParsePowExpr();
                 return new Expression_Negative(optoken, arg);
             }
 
             let expr = this.ParseAtom();
-            if (this.NextTokenIs(['^'])) {
-                const optoken = this.GetNextToken();
+            if (optoken = this.NextTokenIs(['^'])) {
                 const right = this.ParsePowExpr();      // use recursion for right-associative ^ operator
                 return new Expression_Power(optoken, expr, right);
             }
-            
+
             return expr;
         }
 
@@ -211,9 +211,11 @@ window.onload = function() {
         NextTokenIs(list) {
             if (this.nextTokenIndex < this.tokenList.length) {
                 const text = this.tokenList[this.nextTokenIndex].text;
-                return list.indexOf(text) >= 0;
+                if (list.indexOf(text) >= 0) {
+                    return this.tokenList[this.nextTokenIndex++];
+                }
             }
-            return false;   // there are no tokens remaining
+            return null;
         }
 
         ExpectToken(text) {
