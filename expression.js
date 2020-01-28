@@ -329,10 +329,15 @@ window.onload = function() {
     }
 
     const textInput = document.getElementById('ExpressionText');
-    const processButton = this.document.getElementById('ProcessButton');
+    const processButton = document.getElementById('ProcessButton');
+    const prettyPrintBox = document.getElementById('PrettyPrint');
     processButton.addEventListener('click', function(){
         const parser = new Parser(textInput.value);
         const expr = parser.Parse();
-        console.log(expr.Latex());
+        const latex = expr.Latex();
+        prettyPrintBox.innerText = '$$' + latex + '$$';
+
+        // See: http://docs.mathjax.org/en/stable/typeset.html
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub, prettyPrintBox]);
     });
 }

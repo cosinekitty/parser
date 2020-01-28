@@ -1,7 +1,15 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Function Plotter</title>
+        <title>Expression Parser</title>
+        <script type="text/x-mathjax-config">
+            MathJax.Hub.Config({
+              TeX: { equationNumbers: { autoNumber: "AMS" } }
+            });
+
+            MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+        </script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script src="expression.js"></script>
     </head>
     <body>
@@ -14,15 +22,8 @@
             <input type="button" value="Process" id="ProcessButton">
         </div>
 
-        <div>
-            <canvas id="ParseTreeCanvas"></canvas>
-        </div>
-
         <div id="PrettyPrint">
-        </div>
-
-        <div>
-            <canvas id="PlotCanvas"></canvas>
+            $$ \sqrt { x + 3 } $$
         </div>
     </body>
 </html>
