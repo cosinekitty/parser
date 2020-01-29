@@ -4,7 +4,8 @@
         <title>Expression Parser</title>
         <script type="text/x-mathjax-config">
             MathJax.Hub.Config({
-              TeX: { equationNumbers: { autoNumber: "AMS" } }
+              TeX: { equationNumbers: { autoNumber: "AMS" } },
+              displayAlign: "left"
             });
 
             MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
@@ -22,8 +23,9 @@
             <input type="button" value="Process" id="ProcessButton">
         </div>
 
-        <div id="PrettyPrint">
-            $$ \sqrt { x + 3 } $$
-        </div>
+        <p></p>
+
+        <div id="ParseError" style="color: red;"></div>
+        <div id="PrettyPrint"></div>
     </body>
 </html>

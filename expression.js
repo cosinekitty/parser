@@ -41,7 +41,7 @@ window.onload = function() {
             throw {name:'InternalError', message:'Do not know how to convert expression to Latex.'};
         }
 
-        Latex_Binary_LeftAssoc() {
+        Latex_Binary_LeftAssoc(opsymbol) {
             let left = this.arglist[0].Latex();
             let right = this.arglist[1].Latex();
 
@@ -60,7 +60,7 @@ window.onload = function() {
                 right = '\\left(' + right + '\\right)';
             }
 
-            return left + this.optoken.text + right;
+            return left + (opsymbol || this.optoken.text) + right;
         }
 
         Latex_Binary_RightAssoc() {
@@ -82,6 +82,13 @@ window.onload = function() {
             }
 
             return left + this.optoken.text + right;
+        }
+
+        Latex_SingleArg() {
+            if (this.arglist.length !== 1) {
+                throw {name:'LatexError', message:`The function "${this.optoken.text}" requires exactly one argument.`};
+            }
+            return this.arglist[0].Latex();
         }
     }
 
@@ -111,7 +118,7 @@ window.onload = function() {
         }
 
         Latex() {
-            return this.Latex_Binary_LeftAssoc();
+            return this.Latex_Binary_LeftAssoc(' ');
         }
     }
 
@@ -157,7 +164,11 @@ window.onload = function() {
         }
 
         Latex() {
-            return this.optoken.text;
+            if (this.optoken.text.length === 1)
+                return this.optoken.text;
+
+            // Assume this is a special Latex symbol, like a Greek letter.
+            return '\\' + this.optoken.text;
         }
     }
 
@@ -182,7 +193,13 @@ window.onload = function() {
         }
 
         Latex() {
-            return '\\' + this.optoken.text + '\\left(' + this.arglist.map(child => child.Latex()).join(', ') + '\\right)';
+            switch (this.optoken.text) {
+                case 'sqrt':
+                    return '\\sqrt{' + this.Latex_SingleArg() + '}';
+
+                default:
+                    return '\\' + this.optoken.text + '\\left(' + this.arglist.map(child => child.Latex()).join(', ') + '\\right)';
+            }
         }
     }
 
@@ -330,14 +347,29 @@ window.onload = function() {
 
     const textInput = document.getElementById('ExpressionText');
     const processButton = document.getElementById('ProcessButton');
+    const errorBox = document.getElementById('ParseError');
     const prettyPrintBox = document.getElementById('PrettyPrint');
     processButton.addEventListener('click', function(){
-        const parser = new Parser(textInput.value);
-        const expr = parser.Parse();
-        const latex = expr.Latex();
-        prettyPrintBox.innerText = '$$' + latex + '$$';
+        errorBox.innerText = '';
+        prettyPrintBox.innerText = '';
 
-        // See: http://docs.mathjax.org/en/stable/typeset.html
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub, prettyPrintBox]);
+        let latex = null;        
+        const parser = new Parser(textInput.value);
+        try {
+            const expr = parser.Parse();
+            latex = expr.Latex();    
+        } catch (ex) {
+            if (ex.message) {
+                errorBox.innerText = ex.message;
+            } else {
+                errorBox.innerText = 'UNKNOWN ERROR';
+            }
+        }
+
+        if (latex) {
+            prettyPrintBox.innerText = '$$' + latex + '$$';
+            // See: http://docs.mathjax.org/en/stable/typeset.html
+            MathJax.Hub.Queue(['Typeset', MathJax.Hub, prettyPrintBox]);
+        }
     });
 }
