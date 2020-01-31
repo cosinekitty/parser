@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Expression Parser</title>
+        <title>Expression Parser Demo</title>
         <script type="text/x-mathjax-config">
             MathJax.Hub.Config({
               TeX: { equationNumbers: { autoNumber: "AMS" } },
@@ -14,6 +14,22 @@
         <script src="expression.js"></script>
     </head>
     <body>
+        <p>
+            Enter an expression consisting of variables, parentheses, the operators
+            <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>^</code>,
+            and the functions <code>sin</code>, <code>cos</code>, <code>sqrt</code>, and <code>abs</code>.
+        </p>
+
+        <p>
+            When you press the Parse button, the expression is converted to pretty math format.
+        </p>
+
+        <p>
+            <a href="https://github.com/cosinekitty/parser">Complete source code</a>.
+        </p>
+
+        <p></p>
+
         <div>
             Expression:
             <input type="text" id="ExpressionText" size="50">
