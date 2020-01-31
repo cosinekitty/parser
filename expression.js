@@ -164,17 +164,43 @@ window.onload = function() {
         }
     }
 
+    const GreekLetters = {
+        'alpha':true, 'beta':true, 'gamma':true, 'delta':true,
+        'epsilon':true, 'zeta':true, 'eta':true, 'theta':true,
+        'iota':true, 'kappa':true, 'lambda':true, 'mu':true,
+        'nu':true, 'xi':true, 'omicron':true, 'pi':true,
+        'rho':true, 'sigma':true, 'tau':true, 'upsilon':true,
+        'phi':true, 'chi':true, 'psi':true, 'omega':true,
+        'Alpha':true, 'Beta':true, 'Gamma':true, 'Delta':true,
+        'Epsilon':true, 'Zeta':true, 'Eta':true, 'Theta':true,
+        'Iota':true, 'Kappa':true, 'Lambda':true, 'Mu':true,
+        'Nu':true, 'Xi':true, 'Omicron':true, 'Pi':true,
+        'Rho':true, 'Sigma':true, 'Tau':true, 'Upsilon':true,
+        'Phi':true, 'Chi':true, 'Psi':true, 'Omega':true
+    };
+
     class Expression_Identifier extends Expression {
         constructor(token) {
             super(9, token, []);
         }
 
         PrettyMath() {
-            if (this.optoken.text.length === 1)
+            // Any identifier that is a single Latin letter is already valid TeX.
+            if (/^[a-zA-Z]$/.test(this.optoken.text))
                 return this.optoken.text;
 
-            // Assume this is a special PrettyMath symbol, like a Greek letter.
-            return '\\' + this.optoken.text;
+            // Multi-character identifiers must be a lowercase Greek
+            // letter (e.g. alpha) or an uppercase Greek letter (e.g. Alpha).
+            // In that case, the TeX string is \alpha or \Alpha.
+            if (GreekLetters[this.optoken.text])
+                return '\\' + this.optoken.text;
+
+            // Anything other than Latin or Greek letters is an error.
+            throw {
+                name: 'FormatError',
+                message: `The identifier ${this.optoken.text} is not valid. Must be a Latin letter or the name of a Greek letter.`,
+                token: this.optoken
+            };
         }
     }
 
