@@ -7,11 +7,9 @@
 //      mulexpr ::= powexpr { mulop powexpr }
 //   2  mulop ::= "*" | "/"
 //   3  powexpr ::= "-" powexpr | "+" powexpr | atom [ "^" powexpr ]
-//   4  atom ::= ident [ "(" arglist ")" ] | numeric | "(" expr ")"
-//      arglist ::= expr { "," expr }
+//   4  atom ::= ident [ "(" expr ")" ] | numeric | "(" expr ")"
 //   5  numeric ::= /[0-9]+(\.[0-9]*)?([eE][\+\-]?[0-9]+)?/
 //   5  ident ::= /[A-Za-z_][A-Za-z_0-9]*/
-
 
 window.onload = function() {
     class Token {
@@ -37,13 +35,17 @@ window.onload = function() {
             this.arglist = arglist;
         }
 
-        Latex() {
-            throw {name:'InternalError', message:'Do not know how to convert expression to Latex.'};
+        PrettyMath() {
+            throw {
+                name: 'InternalError',
+                message: 'Do not know how to convert expression to TeX.',
+                token: this.optoken
+            };
         }
 
-        Latex_Binary_LeftAssoc(opsymbol) {
-            let left = this.arglist[0].Latex();
-            let right = this.arglist[1].Latex();
+        PrettyMath_Binary_LeftAssoc(opsymbol) {
+            let left = this.arglist[0].PrettyMath();
+            let right = this.arglist[1].PrettyMath();
 
             // Use parentheses around the left child expression
             // if its operator precedence is less than this node's precedence.
@@ -63,13 +65,13 @@ window.onload = function() {
             return left + (opsymbol || this.optoken.text) + right;
         }
 
-        Latex_Binary_RightAssoc() {
+        PrettyMath_Binary_RightAssoc() {
             // Similar to left associative, only we use
             // parentheses when the left child expression
             // has equal precedence, not the right.
 
-            let left = this.arglist[0].Latex();
-            let right = this.arglist[1].Latex();
+            let left = this.arglist[0].PrettyMath();
+            let right = this.arglist[1].PrettyMath();
 
             if (this.arglist[0].precedence <= this.precedence) {
                 left = '\\left(' + left + '\\right)';
@@ -84,11 +86,15 @@ window.onload = function() {
             return left + this.optoken.text + right;
         }
 
-        Latex_SingleArg() {
+        PrettyMath_SingleArg() {
             if (this.arglist.length !== 1) {
-                throw {name:'LatexError', message:`The function "${this.optoken.text}" requires exactly one argument.`};
+                throw {
+                    name: 'FormatError',
+                    message: `The function "${this.optoken.text}" requires exactly one argument.`,
+                    token: this.optoken
+                };
             }
-            return this.arglist[0].Latex();
+            return this.arglist[0].PrettyMath();
         }
     }
 
@@ -97,8 +103,8 @@ window.onload = function() {
             super(1, optoken, [left, right]);
         }
 
-        Latex() {
-            return this.Latex_Binary_LeftAssoc();
+        PrettyMath() {
+            return this.PrettyMath_Binary_LeftAssoc();
         }
     }
 
@@ -107,8 +113,8 @@ window.onload = function() {
             super(1, optoken, [left, right]);
         }
 
-        Latex() {
-            return this.Latex_Binary_LeftAssoc();
+        PrettyMath() {
+            return this.PrettyMath_Binary_LeftAssoc();
         }
     }
 
@@ -117,8 +123,8 @@ window.onload = function() {
             super(2, optoken, [left, right]);
         }
 
-        Latex() {
-            return this.Latex_Binary_LeftAssoc(' ');
+        PrettyMath() {
+            return this.PrettyMath_Binary_LeftAssoc(' ');
         }
     }
 
@@ -127,9 +133,9 @@ window.onload = function() {
             super(2, optoken, [left, right]);
         }
 
-        Latex() {
+        PrettyMath() {
             // Use fraction notation. Operator precedence is irrelevant.
-            return '\\frac{' + this.arglist[0].Latex() + '}{' + this.arglist[1].Latex() + '}';
+            return '\\frac{' + this.arglist[0].PrettyMath() + '}{' + this.arglist[1].PrettyMath() + '}';
         }
     }
 
@@ -138,8 +144,8 @@ window.onload = function() {
             super(4, optoken, [left, right]);
         }
 
-        Latex() {
-            return this.Latex_Binary_RightAssoc();
+        PrettyMath() {
+            return this.PrettyMath_Binary_RightAssoc();
         }
     }
 
@@ -148,9 +154,9 @@ window.onload = function() {
             super(3, optoken, [arg]);
         }
 
-        Latex() {
+        PrettyMath() {
             // Unary prefix operator.
-            let argtext = this.arglist[0].Latex();
+            let argtext = this.arglist[0].PrettyMath();
             if (this.arglist[0].precedence < this.precedence) {
                 return '-\\left(' + argtext + '\\right)';
             }
@@ -163,11 +169,11 @@ window.onload = function() {
             super(9, token, []);
         }
 
-        Latex() {
+        PrettyMath() {
             if (this.optoken.text.length === 1)
                 return this.optoken.text;
 
-            // Assume this is a special Latex symbol, like a Greek letter.
+            // Assume this is a special PrettyMath symbol, like a Greek letter.
             return '\\' + this.optoken.text;
         }
     }
@@ -177,7 +183,7 @@ window.onload = function() {
             super(9, token, []);
         }
 
-        Latex() {
+        PrettyMath() {
             const m = this.optoken.text.match(/^([^eE]+)[eE](.*)$/);
             if (m) {
                 // Convert scientific notation:  1.23e-4 ==> 1.23 \times 10^{-4}
@@ -192,13 +198,24 @@ window.onload = function() {
             super(9, token, arglist);
         }
 
-        Latex() {
+        PrettyMath() {
             switch (this.optoken.text) {
                 case 'sqrt':
-                    return '\\sqrt{' + this.Latex_SingleArg() + '}';
+                    return '\\sqrt{' + this.PrettyMath_SingleArg() + '}';
+
+                case 'abs':
+                    return '\\left|' + this.PrettyMath_SingleArg() + '\\right|';
+
+                case 'cos':
+                case 'sin':
+                    return '\\' + this.optoken.text + '\\left(' + this.PrettyMath_SingleArg() + '\\right)';
 
                 default:
-                    return '\\' + this.optoken.text + '\\left(' + this.arglist.map(child => child.Latex()).join(', ') + '\\right)';
+                    throw {
+                        name: 'FormatError',
+                        message: 'Unknown function "' + this.optoken.text + '"',
+                        token: this.optoken
+                    };
             }
         }
     }
@@ -219,8 +236,12 @@ window.onload = function() {
 
         Parse() {
             const expr = this.ParseExpr();
-            if (this.nextTokenIndex !== this.tokenList.length) {
-                throw {name:'SyntaxError', message:'Syntax error'};
+            if (this.nextTokenIndex < this.tokenList.length) {
+                throw {
+                    name: 'SyntaxError',
+                    message: 'Syntax error',
+                    token: this.tokenList[this.nextTokenIndex]
+                };
             }
             return expr;
         }
@@ -280,16 +301,11 @@ window.onload = function() {
         }
 
         ParseAtom() {
-            // atom ::= ident [ "(" arglist ")" ] | numeric | "(" expr ")"
+            // atom ::= ident [ "(" expr ")" ] | numeric | "(" expr ")"
             const token = this.GetNextToken();
             if (token.kind === 'identifier') {
                 if (this.NextTokenIs(['('])) {
-                    // arglist ::= expr { "," expr }
-                    const arglist = [];
-                    arglist.push(this.ParseExpr());
-                    while (this.NextTokenIs([','])) {
-                        arglist.push(this.ParseExpr());
-                    }
+                    const arglist = [ this.ParseExpr() ];
                     this.ExpectToken(')');
                     return new Expression_Function(token, arglist);
                 }
@@ -307,8 +323,9 @@ window.onload = function() {
             }
 
             throw {
-                name:'SyntaxError',
-                message:'Expected identifier, number, function, or parenthesized expression.'
+                name: 'SyntaxError',
+                message: 'Expected identifier, number, function, or parenthesized expression.',
+                token: token
             };
         }
 
@@ -323,13 +340,17 @@ window.onload = function() {
             if (this.nextTokenIndex < this.tokenList.length) {
                 return this.tokenList[this.nextTokenIndex++];
             }
-            throw {name:'SyntaxError', message:'Unexpected end of expression'};
+            throw {
+                name: 'SyntaxError',
+                message: 'Unexpected end of expression',
+                token: null
+            };
         }
 
-        NextTokenIs(list) {
+        NextTokenIs(validOptionList) {
             if (this.nextTokenIndex < this.tokenList.length) {
                 const text = this.tokenList[this.nextTokenIndex].text;
-                if (list.indexOf(text) >= 0) {
+                if (validOptionList.indexOf(text) >= 0) {
                     return this.tokenList[this.nextTokenIndex++];
                 }
             }
@@ -339,35 +360,52 @@ window.onload = function() {
         ExpectToken(text) {
             const token = this.PeekNextToken();
             if (token === null || token.text !== text) {
-                throw {name:'SyntaxError', message:'Expected "' + text + '"'};
+                throw {
+                    name: 'SyntaxError',
+                    message: 'Expected "' + text + '"',
+                    token: token
+                };
             }
             return this.tokenList[this.nextTokenIndex++];
         }
     }
 
     const textInput = document.getElementById('ExpressionText');
-    const processButton = document.getElementById('ProcessButton');
+    const parseButton = document.getElementById('ParseButton');
     const errorBox = document.getElementById('ParseError');
     const prettyPrintBox = document.getElementById('PrettyPrint');
-    processButton.addEventListener('click', function(){
+    parseButton.addEventListener('click', function(){
         errorBox.innerText = '';
         prettyPrintBox.innerText = '';
 
-        let latex = null;        
+        let pretty = null;
         const parser = new Parser(textInput.value);
         try {
             const expr = parser.Parse();
-            latex = expr.Latex();    
+            pretty = expr.PrettyMath();
         } catch (ex) {
             if (ex.message) {
                 errorBox.innerText = ex.message;
             } else {
                 errorBox.innerText = 'UNKNOWN ERROR';
             }
+
+            // Set focus on the text input box.
+            textInput.focus();
+
+            if (ex.token) {
+                // The error is associated with a particular token.
+                // Mark the token by selecting it in the edit box.
+                textInput.setSelectionRange(ex.token.index, ex.token.index + ex.token.text.length);
+            } else {
+                // We aren't sure where the error is.
+                // Put the cursor at the end of the expression, without marking anything.
+                textInput.setSelectionRange(textInput.value.length, textInput.value.length);
+            }
         }
 
-        if (latex) {
-            prettyPrintBox.innerText = '$$' + latex + '$$';
+        if (pretty) {
+            prettyPrintBox.innerText = '$$' + pretty + '$$';
             // See: http://docs.mathjax.org/en/stable/typeset.html
             MathJax.Hub.Queue(['Typeset', MathJax.Hub, prettyPrintBox]);
         }
