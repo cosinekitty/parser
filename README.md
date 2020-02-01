@@ -13,3 +13,5 @@ into this:
 ![](parser_pretty_expression.png?raw=true)
 
 See the [live demo in your browser](https://doncross.net/parser/).
+
+Read more about this in my [Medium article](https://medium.com/@cosinekitty/create-your-own-expression-parser-d1f622077796) about it.
