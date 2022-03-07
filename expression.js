@@ -312,7 +312,6 @@ window.onload = function() {
 
             let optoken;
             if (optoken = this.NextTokenIs(['-'])) {
-                const optoken = this.GetNextToken();
                 const arg = this.ParsePowExpr();
                 return new Expression_Negative(optoken, arg);
             }
